@@ -1,0 +1,18 @@
+{
+  "policeStations": [
+    {"name": "Station A", "lat": 28.83, "lng": 78.77},
+    {"name": "Station B", "lat": 28.84, "lng": 78.78}
+  ],
+  "lighting": {
+    "street1": 0.8,
+    "street2": 0.5
+  },
+  "crowdDensity": {
+    "area1": 0.7,
+    "area2": 0.3
+  },
+  "ratings": {
+    "routeA": 0.6,
+    "routeB": 0.7
+  }
+}
