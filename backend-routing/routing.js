@@ -1,64 +1,80 @@
-const express = require('express');
-const fs = require('fs');
+const express = require("express");
+const mongoose = require("mongoose");
 const app = express();
 app.use(express.json());
 
-// Load mock data safely
-let dbData = {};
-try {
-  dbData = JSON.parse(fs.readFileSync('../database/mock_data.json'));
-} catch (err) {
-  console.error("Error loading mock_data.json:", err.message);
-}
+// DB connect
+require("../database/db");
+
+// Import Models
+const LightingData = require("../database/models/LightingData");
+const CrowdDensity = require("../database/models/CrowdDensity");
+const CommunityRating = require("../database/models/CommunityRating");
+const PoliceStation = require("../database/models/PoliceStation");
 
 // Safety scoring function
 function calculateSafetyScore(lighting, crowd, police, rating) {
-  return (0.3*lighting + 0.25*crowd + 0.25*police + 0.2*rating);
+  return 0.3 * lighting + 0.25 * crowd + 0.25 * police + 0.2 * rating;
 }
 
 // API endpoint
-app.post('/getSafeRoute', (req, res) => {
+app.post("/getSafeRoute", async (req, res) => {
   const { source, destination } = req.body;
 
-  // ✅ Error handling
   if (!source || !destination) {
     return res.status(400).json({ error: "Source and destination required" });
   }
 
   console.log(`Request received: Source=${source}, Destination=${destination}`);
 
-  // ✅ Use database values (fallback to dummy if missing)
-  const routes = [
-    {
-      route: "Route A",
-      lighting: dbData.lighting?.street1 || 0.8,
-      crowd: dbData.crowdDensity?.area1 || 0.7,
-      police: 0.9,
-      rating: dbData.ratings?.routeA || 0.6
-    },
-    {
-      route: "Route B",
-      lighting: dbData.lighting?.street2 || 0.5,
-      crowd: dbData.crowdDensity?.area2 || 0.4,
-      police: 0.6,
-      rating: dbData.ratings?.routeB || 0.7
-    }
-  ];
+  try {
+    // Fetch values from DB
+    const lighting1 = await LightingData.findOne({ street: "street1" });
+    const lighting2 = await LightingData.findOne({ street: "street2" });
 
-  // ✅ Apply scoring
-  routes.forEach(r => {
-    r.score = calculateSafetyScore(r.lighting, r.crowd, r.police, r.rating);
-  });
+    const crowd1 = await CrowdDensity.findOne({ area: "area1" });
+    const crowd2 = await CrowdDensity.findOne({ area: "area2" });
 
-  // ✅ Pick safest route
-  const safest = routes.reduce((a, b) => a.score > b.score ? a : b);
+    const ratingA = await CommunityRating.findOne({ routeName: "Route A" });
+    const ratingB = await CommunityRating.findOne({ routeName: "Route B" });
 
-  res.json({ safest_route: safest, all_routes: routes });
+    // Police presence (dummy for now, can fetch nearest station later)
+    const policeA = 0.9;
+    const policeB = 0.6;
+
+    // Build routes
+    const routes = [
+      {
+        route: "Route A",
+        lighting: lighting1?.score || 0.8,
+        crowd: crowd1?.score || 0.7,
+        police: policeA,
+        rating: ratingA?.rating || 0.6,
+      },
+      {
+        route: "Route B",
+        lighting: lighting2?.score || 0.5,
+        crowd: crowd2?.score || 0.4,
+        police: policeB,
+        rating: ratingB?.rating || 0.7,
+      },
+    ];
+
+    // Apply scoring
+    routes.forEach((r) => {
+      r.score = calculateSafetyScore(r.lighting, r.crowd, r.police, r.rating);
+    });
+
+    // Pick safest route
+    const safest = routes.reduce((a, b) => (a.score > b.score ? a : b));
+
+    res.json({ safest_route: safest, all_routes: routes });
+  } catch (err) {
+    console.error("Error in /getSafeRoute:", err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
-// Future: Maps API integration placeholder
-// TODO: Replace dummy routes with Google Maps / OpenStreetMap API results
-
 app.listen(3000, () => {
-  console.log('Backend running on http://localhost:3000');
+  console.log("Backend running on http://localhost:3000");
 });
