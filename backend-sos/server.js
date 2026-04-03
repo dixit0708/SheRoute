@@ -8,7 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const sosRoutes = require('./routes/sosRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 
-dotenv.config();
+dotenv.config({ path: '../.env' });
 const app = express();
 
 // Security & Middleware

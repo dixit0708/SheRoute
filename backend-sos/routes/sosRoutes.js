@@ -4,6 +4,5 @@ const protect = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/sendSOS', protect, sendSOS);
-
+router.post('/sendSOS', sendSOS);
 module.exports = router;

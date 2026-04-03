@@ -1,22 +1,73 @@
-import React from 'react';
-import { ShieldExclamationIcon } from '@heroicons/react/24/solid';
+import React, { useState } from 'react';
+import axios from 'axios';
 
 const SOSButton = () => {
+  const [isSending, setIsSending] = useState(false);
+
   const triggerSOS = () => {
-    alert("SOS ALERT: Your live location has been sent to your trusted contacts and nearby police stations."); //
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsSending(true);
+
+    // Grab the user's real-time GPS coordinates
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          // Send coordinates to our new backend route
+         await axios.post('http://localhost:5000/api/sos/sendSOS', {
+            lat: latitude,
+            lng: longitude
+          });
+
+          alert("🚨 SOS SENT! Help has been notified with your live location.");
+        } catch (error) {
+          console.error("Error sending SOS:", error);
+          alert("Failed to send SOS. Check console for details.");
+        } finally {
+          setIsSending(false);
+        }
+      },
+      (error) => {
+        console.error("GPS Error:", error);
+        alert("Please enable location services to use the SOS feature.");
+        setIsSending(false);
+      }
+    );
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-      <span style={{ fontSize: '9px', fontWeight: '900', color: '#dc2626', backgroundColor: '#fff', padding: '2px 8px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>EMERGENCY</span>
-      <button onClick={triggerSOS} style={{
-        width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#dc2626',
-        border: '4px solid #fff', cursor: 'pointer', boxShadow: '0 8px 20px rgba(220,38,38,0.4)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
-        <ShieldExclamationIcon style={{ height: '30px', width: '30px', color: '#fff' }} />
-      </button>
-    </div>
+    <button 
+      onClick={triggerSOS}
+      disabled={isSending}
+      style={{
+        position: 'absolute',
+        bottom: '30px',
+        right: '30px',
+        backgroundColor: '#ef4444',
+        color: 'white',
+        border: 'none',
+        borderRadius: '50%',
+        width: '80px',
+        height: '80px',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        boxShadow: '0 4px 15px rgba(239, 68, 68, 0.5)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        animation: isSending ? 'none' : 'pulse 2s infinite'
+      }}
+    >
+      {isSending ? '...' : 'SOS'}
+    </button>
   );
 };
+
 export default SOSButton;
