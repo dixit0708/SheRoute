@@ -1,0 +1,26 @@
+{
+  "name": "sheroute",
+  "version": "1.0.0",
+  "description": "Smart route planner focusing on women’s safety",
+  "main": "postcss.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dixit0708/SheRoute.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dixit0708/SheRoute/issues"
+  },
+  "homepage": "https://github.com/dixit0708/SheRoute#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3"
+  }
+}
